@@ -1,0 +1,4 @@
+CREATE TABLE table1 (
+    column1_name INT CONSTRAINT PK_table1 PRIMARY KEY NOT NULL,
+    column2_name NVARCHAR(255) NOT NULL
+);
