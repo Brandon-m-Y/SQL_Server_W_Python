@@ -10,10 +10,15 @@ if __name__ == "__main__":
 
     conn = None  # stays None if connecting fails, so we know not to close it
     try:
-        # autocommit=True saves each change right away, with no separate save step.
-        conn = pyodbc.connect(build_conn_str(), autocommit=True)
-        run_sql_file(conn, "create_tables.sql")  # create the table
-        read_csv_file(conn, "orders.csv")     # fill it with the CSV's rows
+        # autocommit=False holds every change until commit(), so a failed run changes nothing.
+        conn = pyodbc.connect(build_conn_str(), autocommit=False)
+        run_sql_file(conn, "create_tables.sql")  # create the table if it's missing
+
+        # Make the table match the CSV. delete_missing=True because orders.csv holds
+        # every order; use False for a file of only new or changed rows.
+        read_csv_file(conn, "orders.csv", delete_missing=True)
+
+        conn.commit()  # save everything at once
         print("Script ran successfully")
     except pyodbc.Error as ex:
         # A database problem: couldn't connect, or SQL Server rejected the SQL.
@@ -21,6 +26,6 @@ if __name__ == "__main__":
         print("Failed")
         print(ex)
     finally:
-        # Always close the connection, whether or not the steps above worked.
+        # Always close the connection. Anything not committed is undone.
         if conn:
             conn.close()
